@@ -23,7 +23,8 @@ websites: dict = {'hi anime': 'https://hianime.is',
                   'youtube': 'https://youtube.com',
                   'github': 'https://github.com/',
                   'google': 'https://google.com',
-                  'chat gpt': 'https://chatgpt.com'
+                  'chat gpt': 'https://chatgpt.com',
+                  'geeks for geeks': 'https://www.geeksforgeeks.org/'
                   } # if you want to add a website to be opened by this program, add the url to value and trigger word in the key of websites dict
 
 
@@ -43,7 +44,7 @@ def process_command(c: str) -> None:
     """
     Processes user voice commands
 
-    :param (c): command to be provided at function call
+    :param c: command to be provided at function call
     :return: returns None
     """
 
@@ -122,15 +123,15 @@ def process_command(c: str) -> None:
 
 
 
-def take_command(text, timeout: int = None, phrase_time_limit: float = None, wake:bool = False) -> str:
+def take_command(text, timeout: float = None, phrase_time_limit: float = None, wake:bool = False) -> str:
     """
     :param text: will print text before it starts to listen
     :param timeout: int to provide timeout to listen function
     :param phrase_time_limit: int to provide phrase_time_limit to listen function
     :param wake: bool to speak beep before listening
     :return: str after successfully recognizing.
-    
     """
+
     while True:
         # Listen for command
         try:
@@ -161,7 +162,6 @@ def main():
 
     while True:
         word = take_command("Initialize by wake word...", 2, 2, wake)
-        print(word)
         
         if(wake_up_word in word):
             wake = True
@@ -175,9 +175,7 @@ def main():
             break
 
         elif 'help' in word:
-            text = (f'You can wake program by using "{wake_up_word}" or kill program by using "{kill_word}".')
-            print(text)
-            speak(text)
+            speak(f'You can wake program by using "{wake_up_word}" or kill program by using "{kill_word}".')
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ queue = queue.Queue()
 
 # program needed global variables
 online: bool = False
-wake: bool = False # the assistant will not be wake at program initialization and you would need to use the wake up word and that will update wake to True
+wake: bool = False # the assistant will not be awake at program initialization, and you would need to use the wake_up word and that will update wake to True
 wake_up_word: str = "arise" # use this to wake assistant up
 kill_word: str = "exit" # use this word to exit program (the voice input should only contain kill_word)
 app_paths: dict = { "steam": "C:\\Program Files (x86)\\Steam\\steam.exe",
@@ -69,18 +69,18 @@ def process_command(c: str) -> None:
         speak('Purging program.')
         exit()
 
-    elif c.startswith('switch'):# switches between google(online) and vosk(offline) speech recog models
-        online = not(online)
+    elif c.startswith('switch'):# switches between google(online) and vosk(offline) speech recognition models
+        online = not online
         speak('Switched mode.')
         return
 
     elif c.startswith('open'): # command to open
-        c = c.replace('open', '', count=1).strip()
+        c = c.replace('open', '', __count=1).strip()
         opener(c)
         return
     
     elif c.startswith('search'): # command to search
-        c = c.replace('search', '', count=1).strip()
+        c = c.replace('search', '', __count=1).strip()
         search(c)
         return
 
@@ -110,10 +110,10 @@ def search(c: str):
 
     for platform, url in web_url.items():
         if c.startswith(platform):
-            c = c.replace(f'{platform}', '', count=1).strip()
+            c = c.replace(f'{platform}', '', __count=1).strip()
             no_error: bool = webbrowser.open(url)
 
-            if no_error == False: 
+            if not no_error:
                 # if the open function in webbrowser module couldn't open url and returns False 
                 speak(f'Something went wrong while opening {platform}')
                 return
@@ -145,7 +145,7 @@ def search(c: str):
     search(search_query)
             
 
-def platform_recognition_error(c: str) -> str:
+def platform_recognition_error(c: str) -> str | bool:
     web_url = websites
     app_dir = app_paths
 
@@ -175,12 +175,12 @@ def listen_wake_word():
         if wake_up_word in word:
             wake = True
             speak("At your command.")
-            while wake == True:
+            while wake:
                 command = take_command("Jarvis Active...", 2, 3, wake)
                 process_command(command)
 
         elif 'switch' in word:
-            online = not(online)
+            online = not online
             speak('Switched mode.')
             continue
                 
@@ -208,7 +208,7 @@ def take_command(text: str, timeout: float = None, phrase_time_limit: float = No
             print(text)
             with sr.Microphone() as source:
                 print('Listening (Online)...')
-                if wake == True:
+                if wake:
                     speak('Beep')
                 audio = recogniser.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
             print('Recognizing...\n')
@@ -235,7 +235,7 @@ def take_command(text: str, timeout: float = None, phrase_time_limit: float = No
 
     with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype="int16", channels=1, callback=callback):
         print("Listening (Offline)...")
-        if wake == True:
+        if wake:
             speak('Beep')
         while True:
             data = queue.get()

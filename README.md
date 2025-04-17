@@ -6,8 +6,8 @@ You can also ask for "help" while it checks for wake word or you can simply clos
 ### Input Choices:
 1. Voice input (online) by google (online = True)
 2. Voice input (offline) by vosk (current default) (online = False)
-   (You can switch between these input mode by saying "switch")
-3. Keyboard input (Enter "quit" to switch back to voice) (start by saying "input")
+   (You can switch between these input mode by saying "exchange model")
+3. Keyboard input (Enter "quit" to switch back to voice) (start by saying "exchange input")
 
 ### Legal commands:
 1. You can open websites and apps by saying "Open {website/app}". Some are already available in the code, or you can add their path in the dictionary within main.py

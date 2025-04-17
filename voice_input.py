@@ -1,20 +1,21 @@
+from vosk import Model, KaldiRecognizer
+import vosk_model
 import pyttsx3
 import speech_recognition as sr
-# the four below modules help recognize audio input when google api fails or there is no internet connection
-from vosk import Model, KaldiRecognizer
 import sounddevice as sd
 import queue
 import json
-import main
+
 
 # engine and model variables + their associated variables
+vosk_mod = Model('vosk_model')# name of the folder where vosk model is downloaded
+kaldi_recognizer = KaldiRecognizer(vosk_mod, 16000)
+queue = queue.Queue()
 recogniser = sr.Recognizer() # speech recognition module shorthand
 engine = pyttsx3.init() # text to speech engine
-vosk_model = Model('vosk-model-small-en-us-0.15')# name of the folder where vosk model is downloaded
-kaldi_recognizer = KaldiRecognizer(vosk_model, 16000)
-queue = queue.Queue()
 
-online: bool = False # True for google speech recognition and False for vosk
+keyboard_input: bool = False # if True, take command from user via keyboard
+online: bool = False # True for google speech recognition and False for vosk (google is more accurate but vosk is faster)
 wake_up_word: str = "arise" # use this to wake assistant up
 kill_word: str = "exit" # use this word to exit program (the voice input should only contain kill_word)
 
@@ -63,12 +64,14 @@ def listen_wake_word() -> bool:
 def take_command(text: str = None, timeout: float = None, phrase_time_limit: float = None, wake:bool = False) -> str:
     if text is not None: print(text)
     
-    while main.keyboard_input:
+    while keyboard_input:
         try:
             command = input('Enter your command (switch to voice input by quit): ').strip().lower()
-        except:
-            print('Something went wrong.')
+
+        except KeyboardInterrupt:
+            print('KeyboardInterrupt.')
             continue
+
         if command == 'quit': speak('Quiting input command mode.')
         return command
         
@@ -77,7 +80,7 @@ def take_command(text: str = None, timeout: float = None, phrase_time_limit: flo
     else: return offline_command(wake)
 
 
-def online_command(timeout: float = None, phrase_time_limit: float = None, wake: bool = False):
+def online_command(timeout: float = None, phrase_time_limit: float = None, wake: bool = False) -> str | None:
     """
     Uses google API for speech recognition
 
@@ -85,12 +88,12 @@ def online_command(timeout: float = None, phrase_time_limit: float = None, wake:
     :param timeout: int to provide timeout to listen function
     :param phrase_time_limit: int to provide phrase_time_limit to listen function
     :param wake: bool to speak beep before listening
-    :return: str after successfully recognizing.
+    :return: str after successfully recognizing or None
     """
     
     global online
 
-    while True:
+    while online:
         try:
             with sr.Microphone() as source:
                 print('Listening (Online)...')
@@ -107,8 +110,8 @@ def online_command(timeout: float = None, phrase_time_limit: float = None, wake:
 
         except sr.RequestError:
             print('Speech Recognition API request failed. Switching to offline mode.')
-            online = False
-            break
+            online = not online
+            return
 
         except Exception as e:
             print(e)
@@ -122,6 +125,7 @@ def offline_command(wake: bool= False) -> str:
 
     def callback(indata, frames, time, status):
         if status: print(status, flush=True)
+        
         queue.put(bytes(indata))
 
     with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype="int16", channels=1, callback=callback):
@@ -141,6 +145,4 @@ def offline_command(wake: bool= False) -> str:
 
 
 if __name__ == '__main__':
-    if listen_wake_word():
-        command = take_command('Taking command through module', 3, 3, True) 
-        main.process_command(command)    
+    listen_wake_word()

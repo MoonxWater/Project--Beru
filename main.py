@@ -1,9 +1,9 @@
 import webbrowser
-import os, time
+import os, time, qr
 import pyautogui
 import voice_input as vi
 
-keyboard_input: bool = False # if True, take command from user via keyboard
+
 wake: bool = False # the assistant will not be awake at program initialization, and you would need to use the wake_up word and that will update wake to True
 app_paths: dict = { "steam": "C:\\Program Files (x86)\\Steam\\steam.exe",
                     "epic games": "C:\\Program Files (x86)\\Epic Games\\Launcher\\Portal\\Binaries\\Win32\\EpicGamesLauncher.exe",
@@ -16,6 +16,7 @@ websites: dict = {'hi anime': 'https://hianime.is/home', # can be triggered in o
                   'ashura': 'https://asuracomic.net/',# can be triggered in offline mode by saying ash
                   'google': 'https://google.com',
                   'chat gpt': 'https://chatgpt.com',
+                  'deep seek': 'https://chat.deepseek.com/',
                   'reaper': 'https://reaperscans.com',
                   'github': 'https://github.com/',
                   'geeks for geeks': 'https://www.geeksforgeeks.org/'
@@ -30,7 +31,7 @@ def process_command(c: str) -> None:
     :return: returns None
     """
 
-    global wake, keyboard_input
+    global wake
 
     if c.startswith('sleep'):
         # updates wake to False and returns to the point where it wakes after listening to wake word
@@ -42,17 +43,22 @@ def process_command(c: str) -> None:
         vi.speak('Purging program.')
         exit()
 
-    elif c.startswith('model switch'):# switches between google(online) and vosk(offline) speech recognition models
-        vi.online = not vi.online
-        vi.speak('Switch complete.')
-        return
-    
-    elif c.startswith('input switch'):
-        keyboard_input = not keyboard_input
-        vi.speak('Switched Input mode.')
-        command = vi.take_command('Waiting for input...', wake=wake)# timeout=0 and phrase_time_limit=0 means keyboard input
-        process_command(command)
-        return
+    elif c.startswith('exchange'):# switches between google(online) and vosk(offline) speech recognition models
+        c = c.replace('exchange', '', count=1).strip()
+        if c == '' or c == ' ':
+            print('1. Exchange model\n2. Exchange input')
+            return
+        if c.startswith('model'):
+            vi.online = not vi.online
+            vi.speak('Exchange complete.')
+            return
+        
+        elif c.startswith('input'):
+            vi.keyboard_input = not vi.keyboard_input
+            vi.speak('Exchanged Input mode.')
+            command = vi.take_command()# timeout=0 and phrase_time_limit=0 means keyboard input
+            process_command(command)
+            return
 
     elif c.startswith('open'): # command to open
         c = c.replace('open', '', count=1).strip()
@@ -70,6 +76,10 @@ def process_command(c: str) -> None:
         type_value = vi.take_command('Waiting for input...', 3, 3, wake)
         vi.speak(f'Typing: {type_value}')
         pyautogui.typewrite(type_value, interval=0.1)
+
+    elif c.startswith('create'):
+        c = c.replace('create', '', count=1).strip()
+        create(c)
 
 
 def opener(c: str):
@@ -91,7 +101,6 @@ def opener(c: str):
         os.startfile(app_paths.get(c))
 
     else: # try to match initial words of the command with the available platforms in websites and app_paths
-        vi.speak(f'Cannot find a match for {c}')
         c = platform_recognition_error_correction(c)
         if c is None: return
         opener(c)
@@ -156,25 +165,31 @@ def search(c: str):
 
 def platform_recognition_error_correction(c: str) -> str | None:
     '''
-    tries to find a match for the provided platform by matching the first 3 characters with the platforms in websites dict
+    Tries to find a match for the provided platform by matching the first 3 characters with the platforms in websites dict
     
     c: argument to be provided when it cannot be found within websites dict
     '''
+
     web_url = websites
     app_dir = app_paths
 
     for platform in web_url.keys():
-        if c[:3] == platform[:3]:
+        if c[:3] == platform[:3] or platform in c:
             vi.speak(f'{platform} is a match.')
             return str(platform)
            
     for app in app_dir.keys():
-        if c[:3] == app[:]:
+        if c[:3] == app[:] or app in c:
             vi.speak(f'{app} is a match.')
             return str(app)
         
     vi.speak(f'No match') 
     return None   
+
+
+def create(c: str):
+    if c.startswith('qr code'):
+        qr.qr()
 
 
 def main():
@@ -185,7 +200,7 @@ def main():
     while not wake:
         wake = vi.listen_wake_word()
         while wake:
-            command = vi.take_command("Jarvis Active...", 2, 3, wake)
+            command = vi.take_command("Beru Active...", 2, 3, wake)
             process_command(command)
 
 
